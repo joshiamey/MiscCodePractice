@@ -26,23 +26,40 @@ namespace Sorters
 
 			for(auto j = 0 ; j < sizer; ++j)
 			{
-				right.push_back(arr[mid + j]);
+				right.push_back(arr[mid + 1 + j]);
 			}
 
 			auto i = 0;
 			auto j = 0;
 
-			for(auto k = 0; k < end; ++k)
+			for(auto k = start; k <= end; ++k)
 			{
-				if(left[i] <= right[j])
+				if(i < sizel && j < sizer)
 				{
-					arr[k] = left[i];
-					++i;
-				}
-				else
+					if(left[i] <= right[j])
+					{
+						arr[k] = left[i];
+						++i;
+					}
+					else
+					{
+						arr[k] = right[j];
+						++j;
+					}
+				}else
 				{
-					arr[k] = right[j];
-					++j;
+					if(j >= sizer)
+					{
+						// fill up the rest of the array with whatever left of left array
+						arr[k] = left[i];
+						++i;
+					}
+					else
+					{
+						// fill up the rest of the array with whatever left of right array
+						arr[k]= right[j];
+						++j;
+					}
 				}
 			}
 		}
