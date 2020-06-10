@@ -43,7 +43,7 @@ public:
             {
                 if (present.size() == k)
                 {
-                    // We have found a string of K distint chars, calculate the lenght
+                    // We have found a string of K distint chars, calculate the length
                     // of the string.
                     auto length = (wend - wstart);
                     maxLength = max(maxLength, length);
