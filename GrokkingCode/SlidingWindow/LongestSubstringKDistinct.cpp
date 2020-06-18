@@ -21,7 +21,7 @@ Output: 5
 Explanation: The longest substrings with no more than '3' distinct characters are "cbbeb" & "bbebi".
  */
 #include <iostream>
-#include <set>
+#include <unordered_map>
 #include <string>
 #include <algorithm>
 
@@ -30,48 +30,45 @@ using namespace std;
 class LongestSubstringKDistinct
 {
 public:
-    int findLength(string &str, int k)
+    int findLength(const string &str, int k)
     {
         auto wstart = 0;
-        auto wend = 0;
         auto maxLength = 0;
-        set<char> present;
+        unordered_map<char, int> present;
 
-        while (wstart < str.size() && wend < str.size())
+        for (auto wend = 0; wend < str.length(); ++wend)
         {
-            if (!present.count(str[wend]))
+            // Start inserting characters of string in the hashmap from
+            // the start of the string
+
+            if (!present.empty() && present.find(str[wend]) != present.end())
             {
-                if (present.size() == k)
-                {
-                    // We have found a string of K distint chars, calculate the length
-                    // of the string.
-                    auto length = (wend - wstart);
-                    maxLength = max(maxLength, length);
-                    // shrink window size and remove a character from the set
-                    present.erase(str[wstart]);
-                    ++wstart;
-                    wend = wstart; // reset wend by point back to start
-                }
-                else
-                {
-                    // Char not present in set , insert it
-                    present.insert(str[wend]);
-                }
+                ++present[str[wend]];
             }
             else
-            { // character present in set, increment wend
-                ++wend;
-            }
-
-            if (wend == str.length() && present.size() == k)
             {
-                // We have reached the end of the string and with K distint characters
-                // calculate the length of substring
-                auto length = (wend - wstart);
-                maxLength = max(maxLength, length);
+                present.emplace(str[wend], 1);
             }
-        }
 
+            // the moment we detect hashmap has got > k distinct characters
+            // We start reducing the windom and removing characters from the
+            // map until less than K chars
+            while (present.size() > k)
+            {
+                --present[str[wstart]];
+
+                if (present[str[wstart]] == 0)
+                {
+                    present.erase(str[wstart]);
+                }
+                ++wstart;
+            }
+
+            // Until we reach hashmap size > K characters, we keep increasing the
+            // character window size to capture as much same contigous chars
+            auto length = (wend - wstart) + 1;
+            maxLength = max(maxLength, length);
+        }
         return maxLength;
     }
 };
@@ -87,15 +84,18 @@ int main(int argc, char const *argv[])
     auto S3 = 1;
 
     cout << " The longest substring with no more than " << S
-         << " distinct characters is of size: " << soln.findLength(str, S)
+         << " distinct characters is of size:"
+         << soln.findLength(str, S)
          << endl;
 
     cout << " The longest substring with no more than " << S2
-         << " distinct characters is of size: " << soln.findLength(str2, S2)
+         << " distinct characters is of size: "
+         << soln.findLength(str2, S2)
          << endl;
 
     cout << " The longest substring with no more than " << S3
-         << " distinct characters is of size: " << soln.findLength(str2, S3)
+         << " distinct characters is of size: "
+         << soln.findLength(str2, S3)
          << endl;
 
     cout << " The longest substring with no more than " << S
