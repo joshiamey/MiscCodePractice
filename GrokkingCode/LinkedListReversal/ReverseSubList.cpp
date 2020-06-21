@@ -5,10 +5,7 @@
 *  head->1->4->3->2->5->null
 */
 #include <iostream>
-#include <vector>
 #include <string>
-#include <sstream>
-#include <algorithm>
 using namespace std;
 class ListNode
 {
@@ -18,31 +15,31 @@ public:
     ListNode(int x) : val(x), next(NULL) {}
 };
 
-class RevereSubList
+class ReverseSubList
 {
 public:
     ListNode *reverseSubList(ListNode *head, int p, int q)
     {
-        ListNode *prev = head;
-        ListNode *curr = head->next;
+        ListNode *prev = nullptr;
+        ListNode *curr = head;
         ListNode *start = nullptr; // To keep track of node before 'p'
 
-        // Traverse the linked list until you find the node 'p'
-        // Store the value of node before 'p' in start
+        // Traverse the linked list until you find the node at position 'p'
+        // Store the value of node at 'p - 1' in start
         // Based upon example list in header: at the end
         // prev=2 curr=3 and start=1
-        while (prev->val != p)
+        for (auto i = 0; i < (p - 1); ++i)
         {
-            start = prev;
             prev = curr;
             curr = curr->next;
         }
 
-        // prev points towards node 'p'
-        // Reverse the sublist until node 'q' by traversing until
-        // prev reaches node 'q'
+        // prev will point towards the node p - 1
+        // curr will point towards the node p
+        start = prev;         // store the p-1 node in start
+        ListNode *end = curr; // store the eventual tailend of the reversed list in end
 
-        while (prev && prev->val != q)
+        for (auto i = 0; curr && i <= (q - p); ++i)
         {
             ListNode *next = curr->next; // store the next pointer
             curr->next = prev;           // Reverse the connection between 2 nodes ( a->b => a<-b)
@@ -50,13 +47,18 @@ public:
             curr = next;                 // increment curr or point curr towards next
         }
 
-        // Once the loop exits, curr will point towards a dangling node which
-        // previously was curr->next, and prev will point towards node 'q'
-        // To complete the list
+        if (start != nullptr)
+        {
+            start->next = prev; // connect the node p - 1 to the head of the reversed linked list
+        }
+        else
+        {
+            head = prev;
+        }
 
-        ListNode *startNext = start->next; // Store the current next pointer of start ( 1->2<-3) 2 in this case
-        start->next = prev;                // complete the reversal on start end by point start->next to prev i.e (q)
-        startNext->next = curr;            // Complete the list at the tail by pointing the startNext next pointer to dangling curr.
+        // Connect the previously store tailend of reversed list to the new curr pointer to
+        // connecting the list
+        end->next = curr;
 
         return head;
     }
@@ -80,22 +82,22 @@ public:
 
 int main()
 {
-    ListNode head(0);
-    ListNode *curr = &head;
+    ListNode *head = new ListNode(1);
+    ListNode *curr = head;
 
-    RevereSubList listReverse;
+    ReverseSubList listReverse;
 
-    for (auto i = 1; i < 6; ++i)
+    for (auto i = 2; i < 6; ++i)
     {
         curr->next = new ListNode(i);
         curr = curr->next;
     }
 
-    cout << listReverse.listNodeToString(&head) << endl;
+    cout << listReverse.listNodeToString(head) << endl;
 
-    listReverse.reverseSubList(&head, 2, 4);
+    head = listReverse.reverseSubList(head, 1, 5);
 
-    cout << listReverse.listNodeToString(&head) << endl;
+    cout << listReverse.listNodeToString(head) << endl;
 
     return 0;
 }
