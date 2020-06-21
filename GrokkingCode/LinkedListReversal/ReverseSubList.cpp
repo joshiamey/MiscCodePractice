@@ -20,9 +20,15 @@ class ReverseSubList
 public:
     ListNode *reverseSubList(ListNode *head, int p, int q)
     {
+        if (p == q)
+        {
+            return head;
+        }
+
         ListNode *prev = nullptr;
         ListNode *curr = head;
         ListNode *start = nullptr; // To keep track of node before 'p'
+        ListNode *end = nullptr;   // Store the tail of the reversed sublist
 
         // Traverse the linked list until you find the node at position 'p'
         // Store the value of node at 'p - 1' in start
@@ -36,8 +42,8 @@ public:
 
         // prev will point towards the node p - 1
         // curr will point towards the node p
-        start = prev;         // store the p-1 node in start
-        ListNode *end = curr; // store the eventual tailend of the reversed list in end
+        start = prev; // store the p-1 node in start
+        end = curr;   // store the eventual tailend of the reversed list in end
 
         for (auto i = 0; curr && i <= (q - p); ++i)
         {
@@ -56,8 +62,8 @@ public:
             head = prev;
         }
 
-        // Connect the previously store tailend of reversed list to the new curr pointer to
-        // connecting the list
+        // Connect the previously store tailend of reversed list
+        // to the node pointed by curr which node (q + 1)
         end->next = curr;
 
         return head;
@@ -87,7 +93,7 @@ int main()
 
     ReverseSubList listReverse;
 
-    for (auto i = 2; i < 6; ++i)
+    for (auto i = 2; i < 20; ++i)
     {
         curr->next = new ListNode(i);
         curr = curr->next;
@@ -95,7 +101,7 @@ int main()
 
     cout << listReverse.listNodeToString(head) << endl;
 
-    head = listReverse.reverseSubList(head, 1, 5);
+    head = listReverse.reverseSubList(head, 2, 14);
 
     cout << listReverse.listNodeToString(head) << endl;
 
