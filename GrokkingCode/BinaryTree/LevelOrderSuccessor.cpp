@@ -27,41 +27,29 @@ public:
 
         while (!q.empty())
         {
-            auto levelsize = q.size();
+            TreeNode *node = q.front();
+            q.pop();
 
-            // Set the levelOrderSuccessor to True or false to indicate
-            // if this level contains the level order successor
-            levelOrderSuccessor = foundKeyNodeLevel;
-            for (auto i = 0; i < levelsize; ++i)
+            if (node->left)
             {
-                TreeNode *node = q.front();
-                q.pop();
+                q.push(node->left);
+            }
 
-                if (levelOrderSuccessor)
-                {
-                    // Found the node that is the level order successor
-                    return node;
-                }
+            if (node->right)
+            {
+                q.push(node->right);
+            }
 
-                if (node->left)
-                {
-                    q.push(node->left);
-                }
-
-                if (node->right)
-                {
-                    q.push(node->right);
-                }
-
-                if (node->data == key)
-                {
-                    // Found the level on which the node key is present
-                    // mark the foundKeyNodeLevel true
-                    foundKeyNodeLevel = true;
-                }
+            if (node->data == key)
+            {
+                // Found the level on which the node key is present
+                // break;
+                break;
             }
         }
-        return nullptr;
+
+        // Return the node currently in the front of the queue
+        return q.front();
     }
 };
 
@@ -77,7 +65,7 @@ int main(int argc, char const *argv[])
     // root->right->right->left = new TreeNode(8);
     // root->right->right->right = new TreeNode(9);
     LevelOrderSuccessor successor;
-    auto result = successor.levelOrderSuccessor(root, 2);
+    auto result = successor.levelOrderSuccessor(root, 3);
 
-    cout << " Successor of node 2 is : " << result->data << endl;
+    cout << " Successor of node 3 is : " << result->data << endl;
 }
