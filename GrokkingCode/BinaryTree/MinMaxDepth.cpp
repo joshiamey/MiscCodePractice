@@ -11,48 +11,67 @@ using namespace std;
 class MinMaxDepth
 {
 private:
-    int doGetMinDepth(TreeNode *root, int depth)
+    int doGetMinDepth(TreeNode *root)
     {
-        if (root == nullptr)
+        auto minTreeDepth = 0;
+        queue<TreeNode *> q;
+        q.push(root);
+        while (!q.empty())
         {
-            // We have reached the leaf node return the calculated depth
-            return depth;
-        }
-        // increment the depth
-        ++depth;
-        auto leftTreeDepth = doGetMinDepth(root->left, depth);
-        auto rightTreeDepth = doGetMinDepth(root->right, depth);
+            auto levelsize = q.size();
+            ++minTreeDepth; // increment mindepth as we reach new level
+            for (auto i = 0; i < levelsize; ++i)
+            {
+                TreeNode *node = q.front();
+                q.pop();
 
-        if (leftTreeDepth < rightTreeDepth)
-        {
-            return leftTreeDepth;
+                // If the node does not have left,right that means we have
+                // reached leaf node, immediately return depth calucalted so far
+
+                if (!node->left && !node->right)
+                    return minTreeDepth;
+
+                if (node->left)
+                {
+                    q.push(node->left);
+                }
+
+                if (node->right)
+                {
+                    q.push(node->right);
+                }
+            }
         }
-        else
-        {
-            return rightTreeDepth;
-        }
+        return minTreeDepth;
     }
 
-    int doGetMaxDepth(TreeNode *root, int depth)
+    int doGetMaxDepth(TreeNode *root)
     {
-        if (root == nullptr)
+        auto maxTreeDepth = 0;
+        queue<TreeNode *> q;
+        q.push(root);
+        while (!q.empty())
         {
-            // We have reached the leaf node return the calculated depth
-            return depth;
-        }
-        // increment the depth
-        ++depth;
-        auto leftTreeDepth = doGetMinDepth(root->left, depth);
-        auto rightTreeDepth = doGetMinDepth(root->right, depth);
+            auto levelsize = q.size();
+            ++maxTreeDepth; // increment maxdepth as we reach new level
+            for (auto i = 0; i < levelsize; ++i)
+            {
+                TreeNode *node = q.front();
+                q.pop();
 
-        if (leftTreeDepth > rightTreeDepth)
-        {
-            return leftTreeDepth;
+                if (node->left)
+                {
+                    q.push(node->left);
+                }
+
+                if (node->right)
+                {
+                    q.push(node->right);
+                }
+            }
         }
-        else
-        {
-            return rightTreeDepth;
-        }
+
+        return maxTreeDepth;
     }
 
 public:
@@ -66,7 +85,7 @@ public:
         if (!root)
             return -1;
 
-        return doGetMinDepth(root, 0);
+        return doGetMinDepth(root);
     }
 
     int maxDepth(TreeNode *root)
@@ -79,7 +98,7 @@ public:
         if (!root)
             return -1;
 
-        return doGetMaxDepth(root, 0);
+        return doGetMaxDepth(root);
     }
 };
 
