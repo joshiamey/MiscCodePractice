@@ -12,11 +12,11 @@ class BinaryTreePathSum
 private:
     bool doHasPath(TreeNode *root, int S)
     {
-        if (root == nullptr)
+        if (root->left == nullptr && root->right == nullptr)
         {
-            // This means the function was called from leaf node which will have right and left null
-            // But the S value should be zero if there is path from root->leaf whose sum is S
-            return (S == 0);
+            // We have reached the leaf node the S value should be
+            // equal to leaf node data if there is path from root->leaf whose sum is S
+            return (root->data == S);
         }
         // increment the depth
         S -= root->data;
@@ -48,7 +48,7 @@ int main(int argc, char const *argv[])
     // root->right->right->left = new TreeNode(8);
     // root->right->right->right = new TreeNode(9);
     BinaryTreePathSum path;
-    auto result = path.hasPath(root, 9);
+    auto result = path.hasPath(root, 8);
 
     cout << " Has Path : " << result << endl;
 }
