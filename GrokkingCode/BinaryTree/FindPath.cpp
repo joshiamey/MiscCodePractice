@@ -10,32 +10,28 @@ using namespace std;
 class FindPath
 {
 private:
-    bool dofindpath(TreeNode *root, vector<int> &path)
+    bool dofindpath(TreeNode *root, vector<int> &path, int pathIndex)
     {
-        // search if the current node is present in the given path vector
-        auto found_iter = find(path.begin(), path.end(), root->data);
-
-        if (found_iter != path.end())
+        if (root->data != path[pathIndex])
         {
-            // if the node is present, remove from the sequence vector to narrow down the search
-            path.erase(found_iter);
-        }
-        else
-        {
-            // The node is not present in the path , return false.
+            // the given node is not present at the given path index
             return false;
         }
 
         if (root->left == nullptr && root->right == nullptr)
         {
-            // We have reached the leaf node by this time the path vector should be empty
-            return path.empty();
+            // We have reached the leaf node by this time the path index should be equal
+            // to the last index of the path vector
+            return pathIndex == (path.size() - 1);
         }
 
-        auto leftpathsum = dofindpath(root->left, path);
-        auto rightpathsum = dofindpath(root->right, path);
+        // post increment the path index
+        pathIndex++;
 
-        // return the addition of path nos calulated in left and right subtrees
+        auto leftpathsum = dofindpath(root->left, path, pathIndex);
+        auto rightpathsum = dofindpath(root->right, path, pathIndex);
+
+        // return true if path is present in left or right subtree
         return (leftpathsum || rightpathsum);
     }
 
@@ -45,7 +41,7 @@ public:
         if (!root)
             return false;
 
-        return dofindpath(root, path);
+        return dofindpath(root, path, 0);
     }
 };
 
