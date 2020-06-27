@@ -1,6 +1,6 @@
-/* Given a binary tree and a number ‘S’, 
-find if the tree has a path from root-to-leaf such that the 
-sum of all the node values of that path equals ‘S’. */
+/* Given a binary tree where each node can only have a digit (0-9) value, 
+each root-to-leaf path will represent a number. 
+Find the total sum of all the numbers represented by all paths. */
 
 #include <iostream>
 #include "TreeNode.h"
