@@ -23,29 +23,23 @@ public:
         {
             auto levelsize = q.size();
 
-            // Get the current size of the queue that represents
-            // the number of nodes at given level
-            // dequeu the nodes for this level and store in currlevel list
-            for (auto i = 0; i < levelsize; ++i)
+            TreeNode *node = q.front();
+            q.pop();
+
+            if (node->left)
             {
-                TreeNode *node = q.front();
-                q.pop();
-
-                if (node->left)
-                {
-                    q.push(node->left);
-                }
-
-                if (node->right)
-                {
-                    q.push(node->right);
-                }
-
-                // Connect the current node with his level order sibling
-                // this time we are connecting all siblings instead siblings
-                // on same level
-                node->next = q.front();
+                q.push(node->left);
             }
+
+            if (node->right)
+            {
+                q.push(node->right);
+            }
+
+            // Connect the current node with his level order sibling
+            // this time we are connecting all siblings instead siblings
+            // on same level
+            node->next = q.front();
         }
         return;
     }
