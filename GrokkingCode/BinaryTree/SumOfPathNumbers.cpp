@@ -11,7 +11,7 @@ class SumOfPathNos
 private:
     int dofindsumofpathnos(TreeNode *root, int currpathno)
     {
-        // increment the depth
+        // calculate the new path no for current node
         currpathno = (currpathno * 10) + root->data;
 
         if (root->left == nullptr && root->right == nullptr)
