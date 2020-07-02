@@ -1,20 +1,8 @@
 /* Given the head of a Singly LinkedList, write a method to return the middle node of the LinkedList.
 If the total number of nodes in the LinkedList is even, return the second middle node. */
 
-#include <iostream>
+#include "ListNode.h"
 using namespace std;
-
-class ListNode
-{
-public:
-    int val;
-    ListNode *next;
-    ListNode(int x)
-        : val(x),
-          next(nullptr)
-    {
-    }
-};
 
 class LinkedListMiddle
 {
@@ -113,6 +101,48 @@ public:
 
         return isPalindrome;
     }
+    /* 
+    Given the head of a Singly LinkedList, write a method to modify the LinkedList 
+    such that the nodes from the second half of the LinkedList are inserted alternately 
+    to the nodes from the first half in reverse order. 
+    So if the LinkedList has nodes 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> null, your method should 
+    return 1 -> 6 -> 2 -> 5 -> 3 -> 4 -> null.
+    Your algorithm should not use any extra space and the input LinkedList should be modified in-place. */
+
+    static ListNode *rearrange(ListNode *head)
+    {
+        if (head == nullptr)
+        {
+            return nullptr;
+        }
+
+        // Find the middle of the linked list
+        auto middle = findMiddle(head);
+
+        if (middle->next == nullptr)
+        {
+            return head;
+        }
+
+        middle->next = reverse(middle->next);
+
+        auto curr = head;
+        auto middleHead = middle->next;
+
+        while (curr && middleHead)
+        {
+            auto next = curr->next;
+            auto middleheadnext = middleHead->next;
+            curr->next = middleHead;
+            curr->next->next = next;
+            curr = next;
+            middleHead = middleheadnext;
+        }
+
+        middle->next = nullptr;
+
+        return head;
+    }
 };
 
 int main()
@@ -120,7 +150,7 @@ int main()
     ListNode *head = new ListNode(1);
     ListNode *curr = head;
 
-    for (auto i = 2; i < 7; ++i)
+    for (auto i = 2; i < 8; ++i)
     {
         curr->next = new ListNode(i);
         curr = curr->next;
@@ -138,4 +168,9 @@ int main()
     head2->next->next->next->next->next = new ListNode(2);
 
     std::cout << "Linked List is Palindrome? " << (LinkedListMiddle::isPalinDrome(head2) ? "TRUE" : "FALSE") << endl;
+
+    ListNode::print(head);
+    cout << "==== After rearranging ===" << endl;
+    head = LinkedListMiddle::rearrange(head);
+    ListNode::print(head);
 }
