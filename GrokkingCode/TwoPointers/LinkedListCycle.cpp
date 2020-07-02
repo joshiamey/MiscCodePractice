@@ -1,20 +1,7 @@
 /* Given the head of a Singly LinkedList that contains a cycle, 
 write a function to find the starting node of the cycle. */
 
-#include <iostream>
-
-class ListNode
-{
-public:
-    int val;
-    ListNode *next;
-    ListNode(int x)
-        : val(x),
-          next(nullptr)
-    {
-    }
-};
-
+#include "ListNode.h"
 class LinkedListCycle
 {
 private:
