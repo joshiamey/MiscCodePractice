@@ -19,10 +19,17 @@ Example 3:
 Input: String="cbbebi", K=3
 Output: 5
 Explanation: The longest substrings with no more than '3' distinct characters are "cbbeb" & "bbebi".
+
+This algorithm also is applicable to Fruits in a basket problem , for that K=2 
+Input: Fruit=['A', 'B', 'C', 'A', 'C']
+Output: 3
+Explanation: We can put 2 'C' in one basket and one 'A' in the other from the subarray ['C', 'A', 'C']
+
  */
 #include <iostream>
 #include <unordered_map>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 using namespace std;
@@ -30,36 +37,29 @@ using namespace std;
 class LongestSubstringKDistinct
 {
 public:
-    int findLength(const string &str, int k)
+    int findLength(const vector<char> &arr, int k)
     {
         auto wstart = 0;
         auto maxLength = 0;
         unordered_map<char, int> present;
 
-        for (auto wend = 0; wend < str.length(); ++wend)
+        for (auto wend = 0; wend < arr.size(); ++wend)
         {
             // Start inserting characters of string in the hashmap from
             // the start of the string
 
-            if (!present.empty() && present.find(str[wend]) != present.end())
-            {
-                ++present[str[wend]];
-            }
-            else
-            {
-                present.emplace(str[wend], 1);
-            }
+            ++present[arr[wend]];
 
             // the moment we detect hashmap has got > k distinct characters
             // We start reducing the windom and removing characters from the
             // map until less than K chars
             while (present.size() > k)
             {
-                --present[str[wstart]];
+                --present[arr[wstart]];
 
-                if (present[str[wstart]] == 0)
+                if (present[arr[wstart]] == 0)
                 {
-                    present.erase(str[wstart]);
+                    present.erase(arr[wstart]);
                 }
                 ++wstart;
             }
@@ -85,21 +85,25 @@ int main(int argc, char const *argv[])
 
     cout << " The longest substring with no more than " << S
          << " distinct characters is of size:"
-         << soln.findLength(str, S)
+         << soln.findLength(vector<char>(str.begin(), str.end()), S)
          << endl;
 
     cout << " The longest substring with no more than " << S2
          << " distinct characters is of size: "
-         << soln.findLength(str2, S2)
+         << soln.findLength(vector<char>(str2.begin(), str2.end()), S2)
          << endl;
 
     cout << " The longest substring with no more than " << S3
          << " distinct characters is of size: "
-         << soln.findLength(str2, S3)
+         << soln.findLength(vector<char>(str.begin(), str.end()), S3)
          << endl;
 
     cout << " The longest substring with no more than " << S
-         << " distinct characters is of size: " << soln.findLength(str3, S)
+         << " distinct characters is of size: " << soln.findLength(vector<char>(str3.begin(), str3.end()), S)
+         << endl;
+
+    cout << " The Maximum number of fruits in 2 baskets " << S
+         << " distinct characters is of size: " << soln.findLength(vector<char>{'A', 'B', 'C', 'B', 'B', 'C'}, 2)
          << endl;
 
     return 0;
