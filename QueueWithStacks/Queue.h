@@ -21,38 +21,11 @@ public:
 	}
 	virtual ~Queue();
 
-	void deque()
-	{
-		if(dequeStack_.empty())
-		{
-			// fill up the dequeu stack with elements from enqueu
-			while(!enqueueStack_.empty())
-			{
-				dequeStack_.push(enqueueStack_.top());
-				enqueueStack_.pop();
-			}
-		}
-		dequeStack_.pop();
-	}
+	void deque();
 
-	void enqueue(uint32_t item)
-	{
-		enqueueStack_.push(item);
-	}
+	void enqueue(uint32_t item);
 
-	uint32_t front()
-	{
-		if(dequeStack_.empty())
-		{
-			// fill up the dequeu stack with elements from enqueu
-			while(!enqueueStack_.empty())
-			{
-				dequeStack_.push(enqueueStack_.top());
-				enqueueStack_.pop();
-			}
-		}
-		return dequeStack_.top();
-	}
+	uint32_t front();
 
 private:
 	std::stack<uint32_t> enqueueStack_;
