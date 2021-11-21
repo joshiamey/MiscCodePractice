@@ -1,5 +1,5 @@
 /* Program to do Recursive DFS */
-#include "Graph.h"
+#include "UndirectedGraph.h"
 #include <iostream>
 using namespace std;
 
@@ -38,7 +38,7 @@ void ConnectedComponents::doDfs(Graph &G, int v, vector<int> &component)
     visited[v] = true;
     component.push_back(v);
     // Iterate over adjacency lists of v
-    for (const auto &w : *G.getAdjLists(v))
+    for (const auto &w : G.getAdjLists(v))
     {
         if (!visited[w])
         {
@@ -69,7 +69,7 @@ ConnectedComponents::~ConnectedComponents()
 
 int main()
 {
-    Graph g(6);
+    UndirectedGraph g(6);
 
     g.addEdge(0, 1);
     g.addEdge(0, 2);

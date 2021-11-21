@@ -1,5 +1,5 @@
 /* Program to do Recursive DFS */
-#include "Graph.h"
+#include "UndirectedGraph.h"
 #include <iostream>
 #include <stack>
 using namespace std;
@@ -34,7 +34,7 @@ void DFS::doDfs(Graph &G, int v)
     visited[v] = true;
     cout << v << " ";
     // Iterate over adjacency lists of v
-    for (const auto &w : *G.getAdjLists(v))
+    for (const auto &w : G.getAdjLists(v))
     {
         if (!visited[w])
         {
@@ -59,7 +59,7 @@ void DFS::doIterativeDfs(Graph &G, int S)
             cout << v << " ";
         }
 
-        for (const auto &w : *G.getAdjLists(v))
+        for (const auto &w : G.getAdjLists(v))
         {
             if (!visited[w])
             {
@@ -75,7 +75,7 @@ DFS::~DFS()
 
 int main()
 {
-    Graph g(4);
+    UndirectedGraph g(4);
 
     g.addEdge(0, 1);
     g.addEdge(0, 2);
