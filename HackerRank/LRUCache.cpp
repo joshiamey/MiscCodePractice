@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <set>
 #include <cassert>
+#include <fstream>
 using namespace std;
 
 struct Node
@@ -45,30 +46,30 @@ public:
     void set(int key, int val) final
     {
         auto found = mp.find(key);
-        if(found != mp.end())
+        if (found != mp.end())
         {
             found->second->value = val;
             return;
         }
 
         ++num_keys;
-        if(!head)
+        if (!head)
         {
-            head = new Node(key,val);
+            head = new Node(key, val);
             tail = head;
         }
         else
         {
-            Node* n = new Node(key,val);
+            Node *n = new Node(key, val);
 
             n->next = head;
             head->prev = n;
             head = n;
         }
 
-        mp.emplace(key,head);
+        mp.emplace(key, head);
 
-        if(num_keys > cp)
+        if (num_keys > cp)
         {
             // remove last key
             mp.erase(tail->key);
@@ -81,16 +82,22 @@ public:
     int get(int key) final
     {
         auto found = mp.find(key);
-        if(found != mp.end())
+        if (found != mp.end())
         {
-            Node* found_node = found->second;
+            Node *found_node = found->second;
             auto ret_val = found_node->value;
-            Node* prev = found_node->prev;
-            Node* next = found_node->next;
-            //if the node is in the middle
-            if(prev)
+            Node *prev = found_node->prev;
+            Node *next = found_node->next;
+            // if the node is in the middle
+            if (prev)
             {
-                if(next == nullptr)
+                found_node->next = head;
+                found_node->prev = nullptr;
+                head = found_node;
+                head->next->prev = head;
+
+                // i.e found node is tail pointer
+                if (next == nullptr)
                 {
                     tail = prev;
                     tail->next = nullptr;
@@ -98,15 +105,9 @@ public:
                 else
                 {
                     next->prev = prev;
-                    prev->next = next;   
-                }                                       
-
-                next = head;
-                prev = nullptr;
-                head = found_node;
-                head->next->prev = head;
+                    prev->next = next;
+                }
             }
-
 
             return ret_val;
         }
@@ -117,35 +118,31 @@ public:
 
 int main()
 {
-    // int n, capacity, i;
-    // cin >> n >> capacity;
-    // LRUCache l(capacity);
-    // for (i = 0; i < n; i++)
-    // {
-    //     string command;
-    //     cin >> command;
-    //     if (command == "get")
-    //     {
-    //         int key;
-    //         cin >> key;
-    //         cout << l.get(key) << endl;
-    //     }
-    //     else if (command == "set")
-    //     {
-    //         int key, value;
-    //         cin >> key >> value;
-    //         l.set(key, value);
-    //     }
-    // }
-    LRUCache l(5);
+    int n, capacity, i;
+    string test_file = "/home/ameya/MiscCodePractice/HackerRank/testcase/testcase1.txt";
+    ifstream ifs(test_file);
 
-    l.set(1,5);
-    l.set(2,6);
-    l.set(3,5);
-    l.set(2,7);
-    l.set(5,9);
-    l.set(6,8);
-
-    cout << l.get(2) << "\n" << l.get(6) << " \n";
+    if (ifs.is_open())
+    {
+        ifs >> n >> capacity;
+        LRUCache l(capacity);
+        for (i = 0; i < n; i++)
+        {
+            string command;
+            ifs >> command;
+            if (command == "get")
+            {
+                int key;
+                ifs >> key;
+                cout << l.get(key) << endl;
+            }
+            else if (command == "set")
+            {
+                int key, value;
+                ifs >> key >> value;
+                l.set(key, value);
+            }
+        }
+    }
     return 0;
 }
