@@ -49,17 +49,14 @@ void AttributeParser::parse(const vector<string> &hrml)
         // will split the line in tokens containing only strings
         // with 0th being tag name and rest being attribute pairs.
         regex ws("[\\s|=|<|>|\"]+");
-        vector<string> tokens;
         string end_tag = "/";
-        copy(sregex_token_iterator(st.begin(), st.end(), ws, -1),
-             sregex_token_iterator(),
-             back_inserter(tokens));
+        sregex_token_iterator it_begin(st.begin(), st.end(), ws, -1);
+        sregex_token_iterator it_end;
 
-        tokens.erase(remove_if(tokens.begin(), tokens.end(),
-                               [&](const string &str)
-                               { return str.empty(); }));
+        ++it_begin; // the first string is space, so skip it
 
-        string tag = tokens[0];
+        // now it_begin shall point to the tag name
+        string tag = it_begin->str();
 
         if (tag.find(end_tag) != string::npos)
         {
@@ -72,8 +69,8 @@ void AttributeParser::parse(const vector<string> &hrml)
                 curr_tag.erase(pos);
             }
             else
-            {            
-                // we just have explored 1 tag , clear the curr_tag     
+            {
+                // we have explored the tag , clear the curr_tag
                 curr_tag.clear();
             }
             continue;
@@ -89,16 +86,19 @@ void AttributeParser::parse(const vector<string> &hrml)
                 curr_tag += "." + tag;
         }
 
-
-        // Tokens begin from 1, and are in pairs 
-        // 1,2 3,4 
-        for (auto i = 1u; i < tokens.size() - 1; i += 2)
+        // Done processing with the tag, process the attributes
+        ++it_begin;
+        // Tokens begin from 1, and are in pairs
+        // 1,2 3,4
+        for (; it_begin != it_end; ++it_begin)
         {
-            string key = curr_tag + "~" + tokens[i];
-            m_tag_attr_map[key] = tokens[i + 1];
+            string key = curr_tag + "~" + it_begin->str();
+            ++it_begin;
+            m_tag_attr_map[key] = it_begin->str();
         }
     }
 }
+
 int main()
 {
     string line;
@@ -106,7 +106,6 @@ int main()
     int queries;
     ifstream ifs;
     string testcase;
-    
 
     cout << "\nEnter test case file path: \n";
     // get test case from user
