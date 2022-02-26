@@ -143,6 +143,8 @@ int main()
                 l.set(key, value);
             }
         }
+        ifs.close();
     }
+
     return 0;
 }
