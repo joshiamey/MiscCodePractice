@@ -1,0 +1,11 @@
+10 4
+set 4 1
+set 5 2
+set 6 8
+get 4 
+get 4 
+set 7 4
+set 4 3
+get 4
+set 18 20
+set 19 25
