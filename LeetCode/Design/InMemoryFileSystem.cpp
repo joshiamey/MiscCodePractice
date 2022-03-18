@@ -18,88 +18,130 @@ Output: [null,[],null,null,["a"],"hello"]
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <map>
-#include <vector>
+#include <list>
 #include <sstream>
 #include <algorithm>
+#include <memory>
+
 using namespace std;
 
-enum FileType
+enum EntryType
 {
-    Directory,
-    File
+    DIR_ENTRY,
+    FILE_ENTRY
 };
 
-class Files
+class InodeEntry 
 {
 private:
     string basename;
-    FileType type;
-    unordered_map<string, string> file_content;
-    vector<string> sub_dirs_files;
-
+    EntryType type;
 public:
-    Files() : basename(),
-              type(),
-              file_content(),
-              sub_dirs_files(){};
-    Files(string name, FileType in_type) : basename(name),
-                                           type(in_type),
-                                           file_content(),
-                                           sub_dirs_files(){};
-
-    ~Files(){};
-
-    void set_data(string name, FileType in_type)
+    InodeEntry():basename(),type(EntryType::DIR_ENTRY){}
+    InodeEntry(const string& name, EntryType in_type):
+        basename(name),
+        type(in_type)
+        {}
+    
+    void set_data(string name, EntryType in_type)
     {
         basename = name;
         type = in_type;
     }
+    virtual void addContentToFile(const string &content) {}
+    virtual string readContentFromFile() {return "";}
+    virtual list<string> get_sub_dirs_files() {return {};}
+    virtual void add_sub_dir(const string &sub_dir){};
+    EntryType getEntryType() {return type;};
+    string getBaseName() {return basename;};
 
-    void addContentToFile(const string &f_name, const string &content)
+    virtual ~InodeEntry() {};
+};
+
+class Directory : public InodeEntry
+{
+private:
+    list<string> sub_dirs_files;
+
+public:
+    Directory():
+        InodeEntry(),
+        sub_dirs_files()
+     {}
+
+    Directory(const string& name, const EntryType& in_type):
+        InodeEntry(name,in_type),
+        sub_dirs_files()
+        {}
+
+    virtual ~Directory(){};
+
+    list<string> get_sub_dirs_files() final
     {
-        auto file_name = file_content.find(f_name);
-
-        if (file_name != file_content.end())
-        {
-            file_name->second += content;
-            return;
-        }
-
-        sub_dirs_files.push_back(f_name);
-        file_content.emplace(f_name, content);
-    }
-
-    string readContentFromFile(const string &f_name)
-    {
-        return file_content[f_name];
-    }
-
-    vector<string> list_sub_dirs_files()
-    {
-        sort(sub_dirs_files.begin(),sub_dirs_files.end());
+        // the sub_dirs are already sorted based on 
         return sub_dirs_files;
     }
 
-    void add_sub_dir(const string &sub_dir)
+    void add_sub_dir(const string &sub_dir) final
     {
         if (sub_dir.empty())
             return;
-        sub_dirs_files.push_back(sub_dir);
+
+        // Insert in appropriate position based on lexographic order
+        auto iter = find_if(sub_dirs_files.begin(),sub_dirs_files.end(),
+                    [&](const auto& a)
+                    {
+                        return a > sub_dir;
+                    });
+        
+        sub_dirs_files.insert(iter,sub_dir);
+        
     }
+};
+
+class File : public InodeEntry
+{
+private:
+    string file_content;
+
+public:
+    File():
+        InodeEntry(),
+        file_content()
+     {}
+
+    File(const string& name, const EntryType& in_type):
+        InodeEntry(name,in_type),
+        file_content()
+        {}
+
+    virtual ~File(){};
+
+
+    void addContentToFile(const string &content)  final
+    {
+        file_content += content;
+    }
+
+    string readContentFromFile() final
+    {
+        return file_content;
+    }
+
 };
 
 class FileSystem
 {
 private:
-    Files root_directory;
-    unordered_map<string, Files> inode_map;
+    string root;
+    unordered_map<string, unique_ptr<InodeEntry>> inode_map;
 
 public:
-    FileSystem() : root_directory("/", FileType::Directory),
-                   inode_map()
+    FileSystem() : inode_map(),root("/")
     {
-        inode_map.emplace("/", root_directory);
+        unique_ptr<InodeEntry> root_ptr = make_unique<Directory>(root,EntryType::DIR_ENTRY);
+
+        inode_map.emplace(root, std::move(root_ptr));
     }
 
     ~FileSystem(){};
@@ -109,7 +151,6 @@ public:
         stringstream ss(path);
         string basename;
 
-        Files &ab = inode_map["/"];
         string curr_path = "";
         while (getline(ss, basename, '/'))
         {
@@ -119,43 +160,53 @@ public:
             }
             if (curr_path.empty())
             {
-                inode_map["/"].add_sub_dir(basename);
+                inode_map[root]->add_sub_dir(basename);
             }
             else
             {
-                inode_map[curr_path].add_sub_dir(basename);
+                inode_map[curr_path]->add_sub_dir(basename);
             }
             curr_path += "/" + basename;
             auto f_ptr = inode_map.find(curr_path);
 
             if (f_ptr == inode_map.end())
             {
-                Files dir(basename, FileType::Directory);
-                inode_map.emplace(curr_path, dir);
+                unique_ptr<InodeEntry> dir = make_unique<Directory>(basename,EntryType::DIR_ENTRY);
+                inode_map.emplace(curr_path, std::move(dir));
             }
         }
     }
 
-    vector<string> ls(const string &full_path)
+    list<string> ls(const string &full_path)
     {
         auto iter = inode_map.find(full_path);
-        vector<string> result;
         if (iter != inode_map.end())
         {
-            return iter->second.list_sub_dirs_files();
-        }
-        else
-        {
-            // its a file , just return the string from last slash to end
-            auto delim_pos = full_path.rfind('/');
-            result.push_back(full_path.substr(delim_pos + 1, full_path.length() - 1));
+            InodeEntry* entry = iter->second.get();
+            if(entry->getEntryType() == EntryType::FILE_ENTRY)
+            {
+                return {entry->getBaseName()};
+            }
+            else
+            {
+                return iter->second->get_sub_dirs_files();
+            }           
         }
 
-        return result;
+
+        return {};
     }
 
     void addContentToFile(const string &full_path, const string &content)
     {
+        auto it = inode_map.find(full_path);
+
+        if(it != inode_map.end())
+        {
+            it->second->addContentToFile(content);
+            return;
+        }
+
         auto delim_pos = full_path.rfind('/');
         auto f_name = full_path;
         if (delim_pos != string::npos)
@@ -164,40 +215,54 @@ public:
             auto dir_path = full_path.substr(0, delim_pos);
             if (!dir_path.empty())
             {
-                inode_map[dir_path].addContentToFile(f_name, content);
+                inode_map[dir_path]->add_sub_dir(f_name);
             }
             else
             {
-                root_directory.addContentToFile(f_name, content);
+                inode_map[root]->add_sub_dir(f_name);
             }
         }
         else
         {
-            root_directory.addContentToFile(f_name, content);
+            inode_map[root]->add_sub_dir(f_name);
         }
+
+        unique_ptr<InodeEntry> fil = make_unique<File>(f_name,EntryType::FILE_ENTRY);
+        fil->addContentToFile(content);
+
+        inode_map.emplace(full_path,std::move(fil));
     }
 
     string readContentFromFile(const string &full_path)
     {
-        auto delim_pos = full_path.rfind('/');
+        auto it = inode_map.find(full_path);
 
-        if (delim_pos != string::npos)
+        if(it != inode_map.end())
         {
-            auto f_name = full_path.substr(delim_pos + 1, full_path.length() - 1);
-            auto dir_path = full_path.substr(0, delim_pos);
-            if (!dir_path.empty())
-            {
-                return inode_map[dir_path].readContentFromFile(f_name);
-            }
-            else
-            {
-                return root_directory.readContentFromFile(f_name);
-            }
+            return it->second->readContentFromFile();
         }
 
-        return root_directory.readContentFromFile(full_path);
-    }
+        return "";
+    }   
 };
+
+namespace ListPrinter
+{
+    template<typename T>
+
+    void print_list(const list<T> vec)
+    {
+        for_each(vec.begin(),
+                 vec.end(),
+                 [&](const auto& elem)
+                 {
+                     cout << elem << endl;
+                 });
+        
+        cout << endl;
+
+    }
+} // namespace ListPrinter
 
 int main(int argc, char const *argv[])
 {
@@ -205,9 +270,13 @@ int main(int argc, char const *argv[])
 
     auto vec = fs.ls("/");
 
-    cout << "vec: " << vec.size() << endl;
+    ListPrinter::print_list<string>(vec);
 
     fs.mkdir("/a/b/c");
+
+    vec = fs.ls("/");
+
+    ListPrinter::print_list<string>(vec);
 
     fs.addContentToFile("/a/b/c/d", "hello");
 
@@ -216,15 +285,23 @@ int main(int argc, char const *argv[])
     fs.addContentToFile("/a/hiawath", "hello hiaw");
     fs.addContentToFile("/a/las", "hello vegas");
 
-    vec = fs.ls("/");
-
-    cout << "vec: " << vec.size() << endl;
-
     vec = fs.ls("/a");
 
-    cout << "vec: " << vec.size() << endl;
+    ListPrinter::print_list<string>(vec);
+
+    fs.addContentToFile("/las", "hello las baby");
 
     cout << fs.readContentFromFile("/a/b/c/d") << endl;
+    vec = fs.ls("/");
 
+    ListPrinter::print_list<string>(vec);
+
+    cout << fs.readContentFromFile("/las") << endl;
+
+    cout << fs.readContentFromFile("/a/las") << endl;
+
+    vec = fs.ls("/a/las");
+
+    ListPrinter::print_list<string>(vec);
     return 0;
 }
