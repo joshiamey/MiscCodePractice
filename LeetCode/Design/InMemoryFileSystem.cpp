@@ -30,32 +30,36 @@ enum EntryType
     DIR_ENTRY,
     FILE_ENTRY
 };
-
-class InodeEntry 
+/*
+    Base class InodeEntry defines the basename and type of the inode entry
+    and provides set of virtual functions that derived classes can implement
+*/
+class InodeEntry
 {
 private:
     string basename;
     EntryType type;
+
 public:
-    InodeEntry():basename(),type(EntryType::DIR_ENTRY){}
-    InodeEntry(const string& name, EntryType in_type):
-        basename(name),
-        type(in_type)
-        {}
-    
+    InodeEntry() : basename(), type(EntryType::DIR_ENTRY) {}
+    InodeEntry(const string &name, EntryType in_type) : basename(name),
+                                                        type(in_type)
+    {
+    }
+
     void set_data(string name, EntryType in_type)
     {
         basename = name;
         type = in_type;
     }
     virtual void addContentToFile(const string &content) {}
-    virtual string readContentFromFile() {return "";}
-    virtual list<string> get_sub_dirs_files() {return {};}
+    virtual string readContentFromFile() { return ""; }
+    virtual list<string> get_sub_dirs_files() { return {}; }
     virtual void add_sub_dir(const string &sub_dir){};
-    EntryType getEntryType() {return type;};
-    string getBaseName() {return basename;};
+    EntryType getEntryType() { return type; };
+    string getBaseName() { return basename; };
 
-    virtual ~InodeEntry() {};
+    virtual ~InodeEntry(){};
 };
 
 class Directory : public InodeEntry
@@ -64,21 +68,21 @@ private:
     list<string> sub_dirs_files;
 
 public:
-    Directory():
-        InodeEntry(),
-        sub_dirs_files()
-     {}
+    Directory() : InodeEntry(),
+                  sub_dirs_files()
+    {
+    }
 
-    Directory(const string& name, const EntryType& in_type):
-        InodeEntry(name,in_type),
-        sub_dirs_files()
-        {}
+    Directory(const string &name, const EntryType &in_type) : InodeEntry(name, in_type),
+                                                              sub_dirs_files()
+    {
+    }
 
-    virtual ~Directory(){};
+    ~Directory(){};
 
     list<string> get_sub_dirs_files() final
     {
-        // the sub_dirs are already sorted based on 
+        // the sub_dirs are already sorted based on
         return sub_dirs_files;
     }
 
@@ -88,14 +92,13 @@ public:
             return;
 
         // Insert in appropriate position based on lexographic order
-        auto iter = find_if(sub_dirs_files.begin(),sub_dirs_files.end(),
-                    [&](const auto& a)
-                    {
-                        return a > sub_dir;
-                    });
-        
-        sub_dirs_files.insert(iter,sub_dir);
-        
+        auto iter = find_if(sub_dirs_files.begin(), sub_dirs_files.end(),
+                            [&](const auto &basename)
+                            {
+                                return basename > sub_dir;
+                            });
+
+        sub_dirs_files.insert(iter, sub_dir);
     }
 };
 
@@ -105,20 +108,19 @@ private:
     string file_content;
 
 public:
-    File():
-        InodeEntry(),
-        file_content()
-     {}
+    File() : InodeEntry(),
+             file_content()
+    {
+    }
 
-    File(const string& name, const EntryType& in_type):
-        InodeEntry(name,in_type),
-        file_content()
-        {}
+    File(const string &name, const EntryType &in_type) : InodeEntry(name, in_type),
+                                                         file_content()
+    {
+    }
 
-    virtual ~File(){};
+    ~File(){};
 
-
-    void addContentToFile(const string &content)  final
+    void addContentToFile(const string &content) final
     {
         file_content += content;
     }
@@ -127,9 +129,11 @@ public:
     {
         return file_content;
     }
-
 };
 
+/* This class defines functions for accessing files and directories in the 
+ file system
+ */
 class FileSystem
 {
 private:
@@ -137,11 +141,9 @@ private:
     unordered_map<string, unique_ptr<InodeEntry>> inode_map;
 
 public:
-    FileSystem() : inode_map(),root("/")
+    FileSystem() : inode_map(), root("/")
     {
-        unique_ptr<InodeEntry> root_ptr = make_unique<Directory>(root,EntryType::DIR_ENTRY);
-
-        inode_map.emplace(root, std::move(root_ptr));
+        inode_map.emplace(root, make_unique<Directory>(root, EntryType::DIR_ENTRY));
     }
 
     ~FileSystem(){};
@@ -171,8 +173,7 @@ public:
 
             if (f_ptr == inode_map.end())
             {
-                unique_ptr<InodeEntry> dir = make_unique<Directory>(basename,EntryType::DIR_ENTRY);
-                inode_map.emplace(curr_path, std::move(dir));
+                inode_map.emplace(curr_path, make_unique<Directory>(basename, EntryType::DIR_ENTRY));
             }
         }
     }
@@ -182,17 +183,16 @@ public:
         auto iter = inode_map.find(full_path);
         if (iter != inode_map.end())
         {
-            InodeEntry* entry = iter->second.get();
-            if(entry->getEntryType() == EntryType::FILE_ENTRY)
+            InodeEntry *entry = iter->second.get();
+            if (entry->getEntryType() == EntryType::FILE_ENTRY)
             {
                 return {entry->getBaseName()};
             }
             else
             {
                 return iter->second->get_sub_dirs_files();
-            }           
+            }
         }
-
 
         return {};
     }
@@ -201,66 +201,74 @@ public:
     {
         auto it = inode_map.find(full_path);
 
-        if(it != inode_map.end())
+        if (it != inode_map.end())
         {
             it->second->addContentToFile(content);
             return;
         }
 
         auto delim_pos = full_path.rfind('/');
-        auto f_name = full_path;
+        auto basename = full_path;
         if (delim_pos != string::npos)
         {
-            f_name = full_path.substr(delim_pos + 1, full_path.length() - 1);
+            basename = full_path.substr(delim_pos + 1, full_path.length() - 1);
             auto dir_path = full_path.substr(0, delim_pos);
             if (!dir_path.empty())
             {
-                inode_map[dir_path]->add_sub_dir(f_name);
+                inode_map[dir_path]->add_sub_dir(basename);
             }
             else
             {
-                inode_map[root]->add_sub_dir(f_name);
+                inode_map[root]->add_sub_dir(basename);
             }
         }
         else
         {
-            inode_map[root]->add_sub_dir(f_name);
+            inode_map[root]->add_sub_dir(basename);
         }
 
-        unique_ptr<InodeEntry> fil = make_unique<File>(f_name,EntryType::FILE_ENTRY);
+        unique_ptr<InodeEntry> fil = make_unique<File>(basename, EntryType::FILE_ENTRY);
         fil->addContentToFile(content);
 
-        inode_map.emplace(full_path,std::move(fil));
+        inode_map.emplace(full_path, std::move(fil));
     }
 
     string readContentFromFile(const string &full_path)
     {
         auto it = inode_map.find(full_path);
 
-        if(it != inode_map.end())
+        if (it != inode_map.end())
         {
             return it->second->readContentFromFile();
         }
+        else
+        {
+            // the file could be part of root directory
+            it = inode_map.find("/" + full_path);
+            if (it != inode_map.end())
+            {
+                return it->second->readContentFromFile();
+            }
+        }
 
         return "";
-    }   
+    }
 };
 
 namespace ListPrinter
 {
-    template<typename T>
+    template <typename T>
 
     void print_list(const list<T> vec)
     {
         for_each(vec.begin(),
                  vec.end(),
-                 [&](const auto& elem)
+                 [&](const auto &elem)
                  {
                      cout << elem << endl;
                  });
-        
-        cout << endl;
 
+        cout << endl;
     }
 } // namespace ListPrinter
 
@@ -289,14 +297,14 @@ int main(int argc, char const *argv[])
 
     ListPrinter::print_list<string>(vec);
 
-    fs.addContentToFile("/las", "hello las baby");
+    fs.addContentToFile("las", "hello las baby");
 
     cout << fs.readContentFromFile("/a/b/c/d") << endl;
     vec = fs.ls("/");
 
     ListPrinter::print_list<string>(vec);
 
-    cout << fs.readContentFromFile("/las") << endl;
+    cout << fs.readContentFromFile("las") << endl;
 
     cout << fs.readContentFromFile("/a/las") << endl;
 
