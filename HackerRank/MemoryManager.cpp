@@ -14,8 +14,9 @@ class MemoryManager
 private:
     struct memBlock
     {
+        void* block;
         bool available;
-        memBlock():available(true){};
+        memBlock():block(nullptr),available(true){};
     };
     size_t m_blocksize;
     size_t m_poolSize;
@@ -31,21 +32,27 @@ public:
 };
 
 MemoryManager::MemoryManager(unsigned long num_blocks,unsigned long block_size)
+:m_blocksize(block_size),
+ m_poolSize(num_blocks * (sizeof(struct memBlock) + m_blocksize))
 {
-    m_blocksize = block_size;
-    m_poolSize = num_blocks * (m_blocksize + sizeof(struct memBlock));
-    memPool = ::operator new(m_poolSize);
-
-    void* curr = memPool;
-    if(memPool)
+    try
     {
+        memPool = ::operator new(m_poolSize);    
         for(unsigned long i = 0 ; i < num_blocks; ++i)
         {
-            struct memBlock* mb = (struct memBlock* )((char *)curr + i * (m_blocksize + sizeof(struct memBlock)));
+            struct memBlock* mb = (struct memBlock* )((char *)memPool + i * (sizeof(struct memBlock) + m_blocksize));
             mb->available = true;
+            // the void* block should point to address after entire struct address + sizeof(struct)
+            mb->block = (void*)((char*)mb + sizeof(struct memBlock));
             blocks.push_front(mb);
         }
     }
+    catch(const std::bad_alloc& e)
+    {
+        std::cerr << "Allocation of Mempool failed" << e.what() << '\n';
+        throw;
+    }
+    
 }
 
 MemoryManager::~MemoryManager()
@@ -59,26 +66,25 @@ MemoryManager::~MemoryManager()
 
 void* MemoryManager::allocate(unsigned long size)
 {
+    if(size > m_blocksize || memPool == nullptr)
+    {
+        return ::operator new(size);
+    }
+
     if(!blocks.front()->available)
     {
         throw runtime_error("No block available in mem pool for allocation.\n");
     }
 
-    if(size > m_blocksize || memPool == nullptr)
-    {
-        return ::operator new(size);
-    }
-    void* alloc_block;
     auto mem_block = blocks.front();
     blocks.pop_front();
     mem_block->available = false;
 
     blocks.push_back(mem_block);
 
-    alloc_block = (void*)((char*)mem_block + sizeof(struct memBlock));
-    use_map.emplace(alloc_block,prev(blocks.end()));
+    use_map.emplace(mem_block->block,prev(blocks.end()));
 
-    return alloc_block;
+    return mem_block->block;
 }
 
 void MemoryManager::deallocate(void* ptr)
@@ -91,10 +97,9 @@ void MemoryManager::deallocate(void* ptr)
 
         if(use_block_iter != use_map.end())
         {
-            // (*use_block_iter->second)->available = true;
             auto mb = use_block_iter->second ;
             (*mb)->available = true;
-            
+            memset((*mb)->block,0,m_blocksize);
             // available now, move the block to the front of the list
             blocks.splice(blocks.begin(),blocks,use_block_iter->second);
 
@@ -108,13 +113,13 @@ void MemoryManager::deallocate(void* ptr)
     
 }
 
-MemoryManager mm(10,2048 * sizeof(char));
+MemoryManager mm(10,10);
 class TestClass
 {
 private:
    
 public:
-    char test_buff[2048];
+    char test_buff[6];
     void * operator new(unsigned long size)
     {
         return mm.allocate(size);
@@ -134,5 +139,7 @@ int main(int argc, char const *argv[])
 
     strncpy(tp->test_buff,"abcd",sizeof("abcd"));
     delete tp;
+
+    cout << sizeof(void*) << endl;
     return 0;
 }
